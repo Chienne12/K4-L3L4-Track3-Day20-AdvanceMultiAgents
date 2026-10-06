@@ -23,7 +23,7 @@ pytest tests/test_01_provided.py
 Kiểm tra kết nối mô hình (tốn một lượng token rất nhỏ):
 
 ```bash
-python -c "from lab.model import make_model; print(make_model().invoke('Reply with OK').content)"
+ "
 ```
 
 ### 0.3. Xem tác tử Deep Agents mặc định
@@ -36,7 +36,8 @@ Lệnh này dùng mô hình giả nên **không tốn token**. Nó in danh sách
 
 Trả lời ngắn các câu hỏi sau vào mục 3 của `report/REPORT.md`:
 
-1. Tác tử mặc định có những công cụ nào? Công cụ nào cho phép chạy lệnh?
+1. Tác tử mặc định có những công cụ nào? Công cụ nào cho phép chạy lệnh? 
+Có
 2. Mô tả của công cụ `task` nói gì về subagent `general-purpose`? Subagent đó nhìn thấy ngữ cảnh nào của tác tử chính?
 3. System prompt mặc định của Deep Agents rỗng. Trích một câu hướng dẫn hành vi từ mô tả của công cụ `task` và một câu từ mô tả của công cụ `execute`.
 
