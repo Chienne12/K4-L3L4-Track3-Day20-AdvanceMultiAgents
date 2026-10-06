@@ -3,13 +3,14 @@
 Pseudo-code: guides/pseudocode/01_agent.md
 Kiểm tra:    pytest tests/test_02_agent.py
 """
+import sys
 from pathlib import Path
 
-# TODO 1: import các thành phần cần dùng, ví dụ:
-#   from deepagents import create_deep_agent
-#   from deepagents.backends import LocalShellBackend
-#   from .model import make_model
-#   from .subagents import get_subagents
+from deepagents import create_deep_agent
+from deepagents.backends import LocalShellBackend
+
+from .model import make_model
+from .subagents import get_subagents
 
 # ---- CÓ SẴN, KHÔNG SỬA: system prompt dùng chung cho mọi sinh viên (để đường cơ sở so sánh được) ----
 PATHS_NOTE = (
@@ -47,7 +48,21 @@ def make_backend(sandbox: Path):
       - Tác tử chạy được lệnh shell và gọi được `python` (cần đặt PATH).
       - KHÔNG chuyển biến môi trường của bạn vào shell của tác tử (khóa API không được lộ).
     """
-    raise NotImplementedError("TODO 2: cài đặt make_backend (xem guides/pseudocode/01_agent.md)")
+    python_dir = str(Path(sys.executable).parent)
+
+    shell_env = {
+        "PATH": python_dir + ":/usr/local/bin:/usr/bin:/bin",
+        "HOME": str(sandbox),
+        "PYTHONDONTWRITEBYTECODE": "1",
+    }
+
+    return LocalShellBackend(
+        root_dir=sandbox,
+        virtual_mode=True,
+        inherit_env=False,
+        env=shell_env,
+        timeout=120,
+    )
 
 
 def build_agent(sandbox: Path, mode: str = "single", use_skills: bool = False, model=None):
@@ -64,4 +79,36 @@ def build_agent(sandbox: Path, mode: str = "single", use_skills: bool = False, m
     mode không hợp lệ -> ném ValueError.
     Trả về: đồ thị (graph) đã biên dịch, gọi bằng `.invoke({"messages": [...]})`.
     """
-    raise NotImplementedError("TODO 3: cài đặt build_agent (xem guides/pseudocode/01_agent.md)")
+    if mode not in ("single", "subagents"):
+        raise ValueError(f"Mode không hợp lệ: {mode}")
+
+    prompt = BASE_PROMPT
+    options = {}
+
+    # Khi dùng chế độ subagents, lấy toàn bộ vai trò đã khai báo.
+    if mode == "subagents":
+        subagents = get_subagents()
+
+        for subagent in subagents:
+            subagent["system_prompt"] += " " + PATHS_NOTE
+
+        options["subagents"] = subagents
+        prompt += SUBAGENTS_NOTE
+
+    # Khi bật skill, chỉ định thư mục và hướng dẫn đọc skill.
+    if use_skills:
+        options["skills"] = ["/skills/"]
+        prompt += SKILLS_NOTE
+
+    # Nếu chưa truyền model thì lấy model từ cấu hình .env.
+    if model is None:
+        model = make_model()
+
+    backend = make_backend(sandbox)
+
+    return create_deep_agent(
+        model=model,
+        system_prompt=prompt,
+        backend=backend,
+        **options,
+    )
